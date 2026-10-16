@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+callprotocol.db
+callprotocol.db-wal
+callprotocol.db-shm
+.env
+*.log
+
+# 로컬 도구 설정
+.claude/
+
+# 이전 버전 화면 (현재는 app.v8.js / style.v8.css 사용)
+web/index.v3.backup.html
+web/app.v3.js
+web/style.v3.css
+
+# 발표자료 작업 파일 · 이전 버전 (최종본만 올림)
+발표자료/work/
+발표자료/CallProtocol_발표자료.pptx
+발표자료/CallProtocol_발표자료_v2.pptx
+발표자료/CallProtocol_발표자료_v3.pptx
+발표자료/CallProtocol_발표자료_v4.pptx
+~$*.pptx

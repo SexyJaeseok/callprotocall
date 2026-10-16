@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CallProtocol · AI 통화 도우미</title>
+  <link rel="stylesheet" href="/style.v8.css" />
+</head>
+<body>
+  <a href="#main" class="skip-link">본문으로 건너뛰기</a>
+
+  <!-- 로그인 -->
+  <section id="auth-view" class="view auth-view" aria-labelledby="auth-title">
+    <div class="auth-card">
+      <h1 id="auth-title" class="brand">
+        <span class="brand-mark" aria-hidden="true">📞</span> CallProtocol
+      </h1>
+      <p class="tagline">말하지 않아도, 전화로 소통할 수 있어요</p>
+
+      <form id="auth-form" autocomplete="on">
+        <div class="field">
+          <label for="email">아이디</label>
+          <input type="text" id="email" name="username" required autocomplete="username"
+                 placeholder="dongeui" />
+        </div>
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" name="password" required
+                 autocomplete="current-password" placeholder="cse915" />
+        </div>
+        <p id="auth-error" class="error-msg" role="alert" aria-live="assertive"></p>
+        <button type="submit" id="auth-submit" class="btn btn-primary btn-block btn-big">로그인</button>
+      </form>
+      <p class="hint">처음이신가요? 아이디 <b>dongeui</b>, 비밀번호 <b>cse915</b> 를 입력하세요.</p>
+    </div>
+  </section>
+
+  <!-- 메인 앱 -->
+  <div id="app-view" class="app" hidden>
+    <header class="topbar">
+      <div class="topbar-brand"><span aria-hidden="true">📞</span> CallProtocol</div>
+      <div class="topbar-user">
+        <span id="ai-badge" class="ai-badge" title="AI 엔진 상태"></span>
+        <span id="user-name"></span>
+        <button id="logout-btn" class="btn btn-ghost">로그아웃</button>
+      </div>
+    </header>
+
+    <!-- 큰 아이콘 메뉴 -->
+    <nav class="topnav" aria-label="주 메뉴">
+      <button class="navbtn active" data-page="new">
+        <span class="navbtn-icon" aria-hidden="true">📞</span>
+        <span class="navbtn-text">전화 걸기</span>
+      </button>
+      <button class="navbtn" data-page="reservations">
+        <span class="navbtn-icon" aria-hidden="true">⏰</span>
+        <span class="navbtn-text">예약</span>
+      </button>
+      <button class="navbtn" data-page="history">
+        <span class="navbtn-icon" aria-hidden="true">📋</span>
+        <span class="navbtn-text">기록</span>
+      </button>
+      <button class="navbtn" data-page="settings">
+        <span class="navbtn-icon" aria-hidden="true">⚙️</span>
+        <span class="navbtn-text">설정</span>
+      </button>
+    </nav>
+
+    <main id="main" class="main">
+      <!-- 1) 새 통화: 프롬프트 입력 -->
+      <section id="page-new" class="page" aria-labelledby="new-title">
+        <h2 id="new-title" class="page-title">
+          <span aria-hidden="true">📞</span> 전화 걸기
+        </h2>
+        <p class="page-help">AI가 대신 전화를 걸어드려요. 아래 두 가지만 적으면 됩니다.</p>
+
+        <div class="step-card" id="step-input">
+          <div class="field">
+            <label for="phone"><span class="step-num">1</span> 어디로 전화할까요? <span class="req">(전화번호)</span></label>
+            <input type="tel" id="phone" class="input-big" inputmode="tel" placeholder="예) 051-123-4567" />
+          </div>
+
+          <div class="field">
+            <label for="instruction"><span class="step-num">2</span> 무엇을 부탁할까요?</label>
+            <textarea id="instruction" class="input-big" rows="3"
+              placeholder="예) 내일 오전에 OO내과에 진료 예약해 줘"></textarea>
+          </div>
+
+          <!-- 상세 설정은 접어둠 (처음 사용자가 헷갈리지 않게) -->
+          <details class="advanced">
+            <summary>통화 종류·방식 바꾸기 (선택 사항)</summary>
+            <div class="field">
+              <label for="purpose">통화 종류</label>
+              <select id="purpose" class="input-big">
+                <option value="">AI가 알아서 판단</option>
+                <option value="hospital">병원 예약</option>
+                <option value="restaurant">식당 예약</option>
+                <option value="store">매장 문의</option>
+                <option value="general">기타 (쓴 내용 그대로)</option>
+              </select>
+            </div>
+            <fieldset class="mode-group">
+              <legend>통화 방식</legend>
+              <label class="mode-opt">
+                <input type="radio" name="mode" value="assisted" checked />
+                <span class="mode-opt-body">
+                  <b>AI 보조 통화 <span class="tag-rec">추천</span></b>
+                  <small>AI가 대화하고, 자막을 보며 내가 끼어들 수 있어요.</small>
+                </span>
+              </label>
+              <label class="mode-opt">
+                <input type="radio" name="mode" value="auto" />
+                <span class="mode-opt-body">
+                  <b>AI 자율 통화</b>
+                  <small>AI가 알아서 통화를 끝까지 진행해요.</small>
+                </span>
+              </label>
+              <label class="mode-opt">
+                <input type="radio" name="mode" value="manual" />
+                <span class="mode-opt-body">
+                  <b>텍스트 직접 통화</b>
+                  <small>내가 입력한 말을 그대로 AI 목소리로 전달해요.</small>
+                </span>
+              </label>
+            </fieldset>
+            <div class="field">
+              <label for="my-name">내 이름 (AI가 "○○ 님 대신 연락드렸어요"라고 소개)</label>
+              <input type="text" id="my-name" class="input-big" maxlength="20" placeholder="예) 재석" />
+            </div>
+            <div class="field">
+              <label for="my-phone4">내 연락처 뒷자리 (가게에서 예약자 확인용)</label>
+              <input type="text" id="my-phone4" class="input-big" inputmode="numeric" maxlength="4" placeholder="예) 1234" />
+            </div>
+            <div class="field">
+              <label for="engine">통화 엔진</label>
+              <select id="engine" class="input-big">
+                <option value="voice">실제 AI 음성 (ElevenLabs)</option>
+                <option value="phone">실제 전화 (Twilio · 자막만, 끼어들기 불가)</option>
+                <option value="sim">시뮬레이션 (백업 · 인터넷 없이 동작)</option>
+              </select>
+            </div>
+            <div class="field" id="device-field">
+              <label>AI 음성 장치 (보이스톡 연결용 · 비우면 기본 장치)</label>
+              <select id="in-device" aria-label="AI가 들을 마이크 장치"><option value="">마이크: 기본 장치</option></select>
+              <select id="out-device" aria-label="AI 목소리를 보낼 스피커 장치" style="margin-top:8px"><option value="">스피커: 기본 장치</option></select>
+              <button type="button" id="load-devices" class="btn btn-ghost" style="margin-top:8px">장치 목록 불러오기</button>
+            </div>
+          </details>
+
+          <button id="analyze-btn" class="btn btn-primary btn-big btn-block">
+            <span aria-hidden="true">▶</span> 시작하기
+          </button>
+        </div>
+
+        <!-- AI 추가 질문 -->
+        <div class="step-card accent" id="step-questions" hidden>
+          <h3 class="card-title"><span aria-hidden="true">💬</span> 몇 가지만 더 알려주세요</h3>
+          <p class="hint" id="question-progress"></p>
+          <div id="question-area"></div>
+        </div>
+
+        <!-- 통화 전 확인 -->
+        <div class="step-card accent" id="step-plan" hidden>
+          <h3 class="card-title"><span aria-hidden="true">✅</span> 이렇게 전화할게요</h3>
+          <p class="hint">내용이 맞으면 아래 큰 버튼을 누르세요.</p>
+          <div id="plan-summary" class="plan-summary"></div>
+          <button id="plan-approve" class="btn btn-primary btn-big btn-block">
+            <span aria-hidden="true">📞</span> 네, 전화 걸기
+          </button>
+          <div class="btn-row btn-row-sub">
+            <button id="plan-edit" class="btn btn-ghost">내용 고치기</button>
+            <button id="plan-reserve" class="btn btn-ghost">나중에 걸기 (예약)</button>
+          </div>
+        </div>
+
+        <!-- 예약 발신 설정 -->
+        <div class="step-card accent" id="step-reserve" hidden>
+          <h3 class="card-title"><span aria-hidden="true">⏰</span> 언제 전화할까요?</h3>
+          <div class="field">
+            <label for="reserve-time">전화 걸 시각</label>
+            <input type="datetime-local" id="reserve-time" class="input-big" />
+          </div>
+          <div class="btn-row">
+            <button id="reserve-cancel" class="btn btn-ghost">취소</button>
+            <button id="reserve-confirm" class="btn btn-primary btn-big">예약 등록</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2) 실시간 통화 -->
+      <section id="page-call" class="page" hidden aria-labelledby="call-title">
+        <div class="call-header">
+          <div>
+            <h2 id="call-title" class="call-target">통화 중</h2>
+            <p class="call-sub" id="call-sub"></p>
+          </div>
+          <div class="call-status">
+            <span class="status-dot" id="conn-dot"></span>
+            <span id="conn-text">연결 중...</span>
+            <span class="call-timer" id="call-timer">00:00</span>
+          </div>
+        </div>
+
+        <div class="mode-banner" id="mode-banner">AI 보조 통화 활성화</div>
+
+        <div class="transcript" id="transcript" aria-live="polite" aria-label="실시간 대화 자막"></div>
+
+        <!-- 사용자 결정 요청 -->
+        <div class="decision-box" id="decision-box" hidden role="alertdialog"
+             aria-labelledby="decision-prompt">
+          <div class="decision-badge"><span aria-hidden="true">❗</span> 확인이 필요해요</div>
+          <p id="decision-prompt" class="decision-prompt"></p>
+          <div id="decision-options" class="decision-options"></div>
+        </div>
+
+        <!-- 통화 제어 -->
+        <div class="call-controls">
+          <div class="intervene">
+            <label for="intervene-input" class="sr-only">AI에게 실시간 지시 또는 직접 전달</label>
+            <input type="text" id="intervene-input" class="input-big"
+              placeholder="AI에게 할 말이나 직접 전달할 말을 입력..." />
+            <div class="intervene-btns">
+              <button id="instruct-btn" class="btn btn-secondary">AI에게 지시</button>
+              <button id="say-btn" class="btn btn-secondary">직접 전달</button>
+            </div>
+          </div>
+          <button id="end-call-btn" class="btn btn-danger btn-big btn-block">
+            <span aria-hidden="true">⏹</span> 통화 끝내기
+          </button>
+        </div>
+      </section>
+
+      <!-- 3) 통화 결과 -->
+      <section id="page-result" class="page" hidden aria-labelledby="result-title">
+        <h2 id="result-title" class="page-title"><span aria-hidden="true">📋</span> 통화 결과</h2>
+        <div id="result-card" class="result-card"></div>
+        <button id="result-done" class="btn btn-primary btn-big btn-block">확인했어요</button>
+      </section>
+
+      <!-- 예약 목록 -->
+      <section id="page-reservations" class="page" hidden aria-labelledby="res-title">
+        <h2 id="res-title" class="page-title"><span aria-hidden="true">⏰</span> 예약한 전화</h2>
+        <div id="reservations-list" class="list"></div>
+      </section>
+
+      <!-- 통화 기록 -->
+      <section id="page-history" class="page" hidden aria-labelledby="hist-title">
+        <h2 id="hist-title" class="page-title"><span aria-hidden="true">📋</span> 지난 통화 기록</h2>
+        <div id="history-list" class="list"></div>
+      </section>
+
+      <!-- 접근성 설정 -->
+      <section id="page-settings" class="page" hidden aria-labelledby="set-title">
+        <h2 id="set-title" class="page-title"><span aria-hidden="true">⚙️</span> 화면 설정</h2>
+        <p class="page-help">글자 크기와 색을 보기 편하게 바꿀 수 있어요.</p>
+        <div class="step-card">
+          <div class="field">
+            <label for="font-scale">글자 크기</label>
+            <input type="range" id="font-scale" min="1" max="2" step="0.1" value="1" />
+            <span id="font-scale-val" class="range-val">100%</span>
+          </div>
+          <label class="toggle-card">
+            <input type="checkbox" id="high-contrast" />
+            <span><b>고대비 모드</b><small>글자와 배경 대비를 더 뚜렷하게</small></span>
+          </label>
+          <label class="toggle-card">
+            <input type="checkbox" id="highlight-new" checked />
+            <span><b>새 자막 강조</b><small>새로 올라온 대화를 눈에 띄게</small></span>
+          </label>
+          <button id="save-settings" class="btn btn-primary btn-big btn-block">설정 저장</button>
+          <p id="settings-saved" class="hint" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/app.v8.js"></script>
+</body>
+</html>
